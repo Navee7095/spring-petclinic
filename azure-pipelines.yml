@@ -47,7 +47,7 @@ stages:
     displayName: Deploy Linux Web App
     environment: $(environmentName)
     pool:
-      name: 'NAVEEN'   # 👈 Self-hosted agent name again
+      name: 'Default'   # 👈 Self-hosted agent name again
 
     strategy:
       runOnce:
