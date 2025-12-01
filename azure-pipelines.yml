@@ -13,7 +13,7 @@ stages:
   - job: MavenPackageAndPublishArtifacts
     displayName: Maven Package and Publish Artifacts
     pool:
-      name: 'default'   # 👈 Self-hosted agent name
+      name: 'Default'   # 👈 Self-hosted agent name
 
     steps:
     - task: Maven@4
