@@ -2,9 +2,11 @@ trigger:
 - main
 
 variables:
-  azureSubscription: '554ceada-6ce3-4200-8f0e-cfbe286bfbe1'
-  webAppName: 'java7095'
-  environmentName: 'java7095'
+  azureSubscription: 'AzureServiceConnection'
+  webAppName: 'naveenjavaapp2026'
+  environmentName: 'naveenjavaapp2026'
+
+
 
 stages:
 
