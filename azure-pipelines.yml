@@ -2,11 +2,9 @@ trigger:
 - main
 
 variables:
-  azureSubscription: 'AzureServiceConnection'
+  azureSubscription: 'AzureServiceConnection'   # MUST be Azure RM service connection
   webAppName: 'naveenjavaapp2026'
   environmentName: 'naveenjavaapp2026'
-
-
 
 stages:
 
@@ -14,12 +12,10 @@ stages:
 - stage: Build
   displayName: "Build stage"
   jobs:
-  - job: MavenPackageAndPublishArtifacts
-    displayName: "Maven Package and Publish Artifacts"
+  - job: MavenBuild
+    displayName: "Build with Maven"
     pool:
-      name: Default
-      demands:
-        - Agent.Name -equals selft-hosted   # 👈 MUST HAVE
+      name: Default   # change to 'naveen' if your agent pool is naveen
 
     steps:
     - task: Maven@4
@@ -30,19 +26,22 @@ stages:
         javaHomeOption: 'JDKVersion'
         jdkVersionOption: '1.17'
         jdkArchitectureOption: 'x64'
+        goals: 'clean package'
         publishJUnitResults: true
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
-        goals: 'clean package'
 
     - task: CopyFiles@2
-      displayName: "Copy JAR/WAR to staging"
+      displayName: "Copy artifacts"
       inputs:
         SourceFolder: '$(System.DefaultWorkingDirectory)'
         Contents: '**/target/*.?(war|jar)'
-        TargetFolder: $(Build.ArtifactStagingDirectory)
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
-    - upload: $(Build.ArtifactStagingDirectory)
-      artifact: drop
+    - task: PublishBuildArtifacts@1
+      displayName: "Publish Artifacts"
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: 'drop'
 
 
 # ------------------- DEPLOY STAGE -------------------
@@ -50,23 +49,27 @@ stages:
   displayName: "Deploy stage"
   dependsOn: Build
   condition: succeeded()
+
   jobs:
-  - deployment: DeployLinuxWebApp
+  - deployment: DeployWebApp
     displayName: "Deploy to Azure Web App"
     environment: $(environmentName)
+
     pool:
-      name: Default
-      demands:
-        - Agent.Name -equals selft-hosted   # 👈 MUST HAVE
+      name: azure   # change if needed
 
     strategy:
       runOnce:
         deploy:
           steps:
+
+          - download: current
+            artifact: drop
+
           - task: AzureWebApp@1
-            displayName: "Azure Web App Deploy: java7095"
+            displayName: "Deploy to Azure Web App"
             inputs:
               azureSubscription: $(azureSubscription)
               appType: webAppLinux
               appName: $(webAppName)
-              package: '$(Pipeline.Workspace)/drop/**/*.?(war|jar)'
+              package: '$(Pipeline.Workspace)/drop/**/*.jar'
